@@ -2,7 +2,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 
-// Short, clean presets and 3 simple themes
 const PRESETS = [
   "GM ☀️",
   "Shipping today 🚀",
@@ -23,14 +22,11 @@ export default function Page() {
   const [theme, setTheme] = useState(THEMES[0]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [previewUrl, setPreviewUrl] = useState("");
 
   useEffect(() => {
-    // Tell the Farcaster container we're ready (no-op on web)
     sdk.actions.ready().catch(() => {});
-  }, []);
-
-  // Nice default: rotate preset by day
-  useEffect(() => {
+    // rotate a default preset
     const i = (new Date().getUTCDate() + new Date().getUTCMonth()) % PRESETS.length;
     setText(PRESETS[i]);
   }, []);
@@ -40,9 +36,10 @@ export default function Page() {
   async function share() {
     setErrorMsg("");
     setLoading(true);
+    setPreviewUrl("");
     try {
-      // 1) Ask our Edge route to render a PNG
-      const res = await fetch("/api/card", {
+      // Generate PNG from our edge route
+      const res = await fetch(`/api/card?ts=${Date.now()}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, theme }),
@@ -54,20 +51,30 @@ export default function Page() {
       }
       const blob = await res.blob();
 
-      // 2) Attach ONLY the image to the composer (no embeds → no gray link box)
+      // Show a small inline preview so we know the image is valid
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+
+      // Send ONLY the image as an attachment (no embeds)
       const file = new File([blob], "castcard.png", { type: "image/png" });
-      await sdk.actions.composeCast({
-        text,
-        attachments: [file],
-      });
+
+      // Primary path
+      try {
+        await sdk.actions.composeCast({ text, attachments: [file] });
+      } catch {
+        // Fallback (some clients expose openComposer)
+        if (sdk.actions.openComposer) {
+          await sdk.actions.openComposer({ text, attachments: [file] });
+        } else {
+          throw new Error("Composer not available in this preview. Click 'Open URL as Mini App'.");
+        }
+      }
     } catch (e) {
       setErrorMsg(String(e?.message || e));
     } finally {
       setLoading(false);
     }
   }
-
-  function copyPreset(p) { setText(p); }
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: 16, display: "grid", gap: 16 }}>
@@ -77,7 +84,7 @@ export default function Page() {
         <div style={{ fontWeight: 700, marginBottom: 8 }}>1) Pick a preset</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {PRESETS.map((p) => (
-            <button key={p} onClick={() => copyPreset(p)} style={chip}>
+            <button key={p} onClick={() => setText(p)} style={chip}>
               {p}
             </button>
           ))}
@@ -129,9 +136,19 @@ export default function Page() {
         </div>
       </section>
 
+      {previewUrl && (
+        <section style={card}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Preview (generated PNG)</div>
+          <img src={previewUrl} alt="card preview" style={{ maxWidth: "100%", borderRadius: 12 }} />
+        </section>
+      )}
+
       {errorMsg && (
         <div style={{ ...card, borderColor: "#a33", color: "#fbb" }}>
           {errorMsg}
+          <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8 }}>
+            If you’re in the developer shell, click <b>Open URL as Mini App</b> and try again.
+          </div>
         </div>
       )}
 
@@ -145,10 +162,9 @@ export default function Page() {
   );
 }
 
-// Simple inline styles (no Tailwind required)
 const card = { border: "1px solid #333", borderRadius: 12, padding: 12, background: "transparent" };
 const chip = {
-  background: "transparent", color: "#fff", border: "1px solid #333",
+  background: "transparent", color: "#000", border: "1px solid #333",
   borderRadius: 999, padding: "8px 12px", cursor: "pointer"
 };
 const input = {
@@ -160,6 +176,6 @@ const btnPrimary = (t) => ({
   padding: "12px 16px", borderRadius: 12, fontWeight: 800, minWidth: 140
 });
 const btnGhost = {
-  background: "transparent", color: "#fff", border: "1px solid #444",
+  background: "transparent", color: "#000", border: "1px solid #444",
   padding: "12px 16px", borderRadius: 12, minWidth: 120
 };
