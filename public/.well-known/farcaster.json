@@ -3,10 +3,15 @@
     "version": "1",
     "name": "CastCard",
     "homeUrl": "https://castcard-five.vercel.app",
-    "iconUrl": "https://castcard-five.vercel.app//icon.png",
-    "splashImageUrl": "https://castcard-five.vercel.app//icon.png",
+    "iconUrl": "https://castcard-five.vercel.app/icon.png",
+    "splashImageUrl": "https://castcard-five.vercel.app/icon.png",
     "splashBackgroundColor": "#0B0B0B",
     "primaryCategory": "tools",
     "tags": ["share", "cards", "templates"]
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjI3OTA5NiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDcxQ0E0MmEwMEVBMjdmMTYyNTg5N2IwNzQ5NjU3OTlCMzE2ZDA3ZjUifQ",
+    "payload": "eyJkb21haW4iOiJjYXN0Y2FyZC1maXZlLnZlcmNlbC5hcHAifQ",
+    "signature": "MHgxNGJhNjZkNjY3YjFiMWIxMzg3MjZhMjY1NzA1OTJlYWM4MTIzMzBiMmQyMjAwZmJjNjEzMzU1MTJlY2VkOWQzMDcwMjUyNWExNmNlZTNjYTNhMzZhMzY0ZGIwMmVhNGVlZWIxYTE5NDE3M2M2MjdiZmFlOTg3NWU5MmMwZTc3MDFj"
   }
 }
