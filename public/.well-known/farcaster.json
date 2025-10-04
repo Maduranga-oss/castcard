@@ -1,0 +1,12 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "CastCard",
+    "homeUrl": "https://<your-vercel-subdomain>.vercel.app",
+    "iconUrl": "https://<your-vercel-subdomain>.vercel.app/icon.png",
+    "splashImageUrl": "https://<your-vercel-subdomain>.vercel.app/icon.png",
+    "splashBackgroundColor": "#0B0B0B",
+    "primaryCategory": "tools",
+    "tags": ["share", "cards", "templates"]
+  }
+}
