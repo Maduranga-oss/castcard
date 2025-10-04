@@ -34,47 +34,41 @@ export default function Page() {
   const disabled = useMemo(() => !text || text.length > 80, [text]);
 
   async function share() {
-    setErrorMsg("");
-    setLoading(true);
-    setPreviewUrl("");
-    try {
-      // Generate PNG from our edge route
-      const res = await fetch(`/api/card?ts=${Date.now()}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, theme }),
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        setErrorMsg(`Image generation failed: ${msg}`);
-        return;
-      }
+  setErrorMsg("");
+  setLoading(true);
+  setPreviewUrl("");
+  try {
+    // (Optional) still show an inline preview via POST so the user sees the card render
+    const res = await fetch(`/api/card?ts=${Date.now()}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, theme }),
+    });
+    if (res.ok) {
       const blob = await res.blob();
-
-      // Show a small inline preview so we know the image is valid
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
-
-      // Send ONLY the image as an attachment (no embeds)
-      const file = new File([blob], "castcard.png", { type: "image/png" });
-
-      // Primary path
-      try {
-        await sdk.actions.composeCast({ text, attachments: [file] });
-      } catch {
-        // Fallback (some clients expose openComposer)
-        if (sdk.actions.openComposer) {
-          await sdk.actions.openComposer({ text, attachments: [file] });
-        } else {
-          throw new Error("Composer not available in this preview. Click 'Open URL as Mini App'.");
-        }
-      }
-    } catch (e) {
-      setErrorMsg(String(e?.message || e));
-    } finally {
-      setLoading(false);
     }
+
+    // Build a PUBLIC direct image URL for the embed (works on web + mobile)
+    const origin = typeof window !== "undefined"
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_DOMAIN || "https://your-domain");
+    const themeKey = theme.name.toLowerCase(); // "Grape" -> "grape"
+    const embedUrl = `${origin}/api/card.png?text=${encodeURIComponent(text)}&theme=${encodeURIComponent(themeKey)}`;
+
+    // Send ONLY the embed URL; composer will show the image preview
+    await sdk.actions.composeCast({
+      text,
+      embeds: [embedUrl],
+    });
+  } catch (e) {
+    setErrorMsg(String(e?.message || e));
+  } finally {
+    setLoading(false);
   }
+}
+
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: 16, display: "grid", gap: 16 }}>
